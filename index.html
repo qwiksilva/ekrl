@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Card Game</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div id="game">
+        <h3 id="current-player" class="current-player"></h3>
+        <h2 id="turn-indicator">Waiting for players...</h2>
+        <div id="deck-container">
+            <div id="deck" class="deck">Deck</div>
+            <p id="deck-count"></p>
+        </div>
+        
+        <div id="player0-container" class="player-container">
+            <h3>Player 0's Hand</h3>
+            <div id="player1-hand" class="player-hand"></div>
+        </div>
+
+        <div id="player2-container" class="player-container">
+            <h3>Player 1's Hand</h3>
+            <div id="player2-hand" class="player-hand"></div>
+        </div>
+
+        <div id="discard-container" class="player-container">
+            <h3>Discard Pile</h3>
+            <div id="discard-pile" class="player-hand"></div>
+        </div>
+    </div>
+
+    <!-- Add section to display logs -->
+    <div id="logs" class="logs"></div>
+
+    <script src="static/game.js"></script>
+</body>
+</html>

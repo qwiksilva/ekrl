@@ -1,0 +1,62 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+#game {
+    text-align: center;
+}
+
+.deck {
+    width: 100px;
+    height: 150px;
+    background-color: lightgray;
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    border: 2px solid black;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.player-hand {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.card {
+    width: 60px;
+    height: 90px;
+    margin: 10px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background-color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#turn-indicator {
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#deck-count {
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.player-container {
+    margin: 20px 0;
+}

@@ -1,0 +1,15 @@
+{
+    "num_players": 2,
+    "num_cards_in_starting_hand": 4,
+    "num_defuse_cards_in_starting_hand": 1,
+    "num_defuse_cards": 1,
+    "num_attack_cards": 1,
+    "num_skip_cards": 1,
+    "num_favor_cards": 1,
+    "num_shuffle_cards": 1,
+    "num_cat1_cards": 2,
+    "num_cat2_cards": 2,
+    "num_cat3_cards": 0,
+    "num_cat4_cards": 0,
+    "num_cat5_cards": 0
+}

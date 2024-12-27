@@ -2,7 +2,13 @@ import numpy as np
 import logging
 import random
 from enum import Enum
+import json
+import gymnasium as gym
+from gymnasium import spaces
+
 import pdb
+
+# TODO: check out: https://github.com/pirasalbe/Exploding-Kittens-Telegram-bot/tree/main
 
 # Mapping from Card Type to position (index) in the Agent's state
 class Cards(Enum):
@@ -16,12 +22,11 @@ class Cards(Enum):
     CAT3 = 7
     CAT4 = 8
     CAT5 = 9
-    NULL = 10
     EXPLODING_KITTEN = 15
 
     @staticmethod
     def numCardTypes():
-        return 10
+        return len(Cards) - 1
 
 class PlayerState:
     def __init__(self, hand):
@@ -31,63 +36,67 @@ class PlayerState:
 def isCatCard(value):
     return True if (value > 4 and value < 10) else False
 
-class EKGameV0:
-    def __init__(self, debug=False):
+class EKGameV0(gym.Env):
+    def __init__(self, config_file=None, debug=False):
+        super(EKGameV0, self).__init__()
+
+        if config_file is None:
+            config_file = None
+        else:
+            with open(config_file, "r") as f:
+                self.game_config = json.load(f)
+
+        self.NUM_CARD_TYPES = 10
+        self.NUM_CARDS_IN_STARTING_DECK = sum([int(self.game_config[k]) for k in self.game_config if "card" in k and "in_starting_hand" not in k])
+        self.NUM_TOTAL_CARDS = self.NUM_CARDS_IN_STARTING_DECK + sum([int(self.game_config[k]) for k in self.game_config if "in_starting_hand" in k]) * self.game_config["num_players"]
+
         self.debug = debug
         self.playerId = 0
-        self.actionSpace = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.int)
-        self.action_size = len(self.actionSpace)
+        # self.actionSpace = np.array([0] * self.NUM_CARD_TYPES, dtype=int)
+        # self.action_size = len(self.actionSpace)
         self.name = 'exploding_kittens'
+        
+        
+        if self.debug:
+            print(self.NUM_TOTAL_CARDS)
+            print(self.NUM_CARDS_IN_STARTING_DECK)
+
+        # Define action and observation space
+        # They must be gymnasium.spaces objects
+        self.action_space = spaces.Discrete(self.NUM_CARD_TYPES)
+        self.observation_space = spaces.MultiDiscrete([2])
 
         self.reset()
 
-    def reset(self):
-        # Put all card in deck except E.K. and 2 defuse
-        # deck = [Cards.DEFUSE, Cards.DEFUSE,
-        #         Cards.ATTACK, Cards.ATTACK, Cards.ATTACK, Cards.ATTACK,
-        #         Cards.SKIP, Cards.SKIP, Cards.SKIP, Cards.SKIP,
-        #         Cards.FAVOR, Cards.FAVOR, Cards.FAVOR, Cards.FAVOR,
-        #         Cards.SHUFFLE, Cards.SHUFFLE, Cards.SHUFFLE, Cards.SHUFFLE,
-        #         Cards.CAT1, Cards.CAT1, Cards.CAT1, Cards.CAT1,
-        #         Cards.CAT2, Cards.CAT2, Cards.CAT2, Cards.CAT2,
-        #         Cards.CAT3, Cards.CAT3, Cards.CAT3, Cards.CAT3,
-        #         Cards.CAT4, Cards.CAT4, Cards.CAT4, Cards.CAT4,
-        #         Cards.CAT5, Cards.CAT5, Cards.CAT5, Cards.CAT5]
-
-        deck = [Cards.DEFUSE, Cards.DEFUSE,
-                Cards.ATTACK, Cards.ATTACK,
-                Cards.SKIP, Cards.SKIP,
-                Cards.FAVOR, Cards.FAVOR,
-                Cards.SHUFFLE, Cards.SHUFFLE,
-                Cards.CAT1, Cards.CAT1, Cards.CAT1,
-                Cards.CAT2, Cards.CAT2, Cards.CAT2]
-        HAND_SIZE = 4
-
-        # deck = [Cards.DEFUSE,
-        #         Cards.ATTACK,
-        #         Cards.SKIP,
-        #         Cards.FAVOR,
-        #         Cards.SHUFFLE,
-        #         Cards.CAT1, Cards.CAT1,
-        #         Cards.CAT2, Cards.CAT2]
-        # HAND_SIZE = 3
+    def reset(self, seed=None):
+        # Put all card in deck except E.K. and 2 defuse cards        
+        deck = [Cards.DEFUSE] * self.game_config["num_defuse_cards"] \
+                + [Cards.ATTACK] * self.game_config["num_attack_cards"] \
+                + [Cards.SKIP] * self.game_config["num_skip_cards"] \
+                + [Cards.FAVOR] * self.game_config["num_favor_cards"] \
+                + [Cards.SHUFFLE] * self.game_config["num_shuffle_cards"] \
+                + [Cards.CAT1] * self.game_config["num_cat1_cards"] \
+                + [Cards.CAT2] * self.game_config["num_cat2_cards"] \
+                + [Cards.CAT3] * self.game_config["num_cat3_cards"] \
+                + [Cards.CAT4] * self.game_config["num_cat4_cards"] \
+                + [Cards.CAT5] * self.game_config["num_cat5_cards"]
 
         # Shuffle deck
         random.shuffle(deck)
 
         # Deal hands (plus 1 defuse)
-        hand1 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        for _ in range(HAND_SIZE):
+        hand1 = [0] * self.NUM_CARD_TYPES
+        for _ in range(self.game_config["num_cards_in_starting_hand"]):
             card = deck.pop()
             hand1[card.value] += 1
-        hand1[Cards.DEFUSE.value] += 1
+        hand1[Cards.DEFUSE.value] += self.game_config["num_defuse_cards_in_starting_hand"]
         player1 = PlayerState(hand1)
 
-        hand2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        for _ in range(HAND_SIZE):
+        hand2 = [0] * self.NUM_CARD_TYPES
+        for _ in range(self.game_config["num_cards_in_starting_hand"]):
             card = deck.pop()
             hand2[card.value] += 1
-        hand2[Cards.DEFUSE.value] += 1
+        hand2[Cards.DEFUSE.value] += self.game_config["num_defuse_cards_in_starting_hand"]
         player2 = PlayerState(hand2)
 
         players = [player1, player2]
@@ -99,7 +108,9 @@ class EKGameV0:
         deck.insert(position, Cards.EXPLODING_KITTEN)
         self.gameState = ExplodingKittensGameState(deck, players, currentPlayer, self.debug)
 
-        return self.observation
+        self.STARTING_DECK_SIZE = len(deck)
+
+        return (self.observation, {})
 
     def step(self, action):
         # Make sure the action is valid in this game state
@@ -171,7 +182,12 @@ class EKGameV0:
         #     else:
         #         playerStates.append(str(sum(playerState.hand)))
 
-        obs = "|".join(playerStates) + "|" + str(len(self.gameState.deck)) + "|" + ",".join([str(x) for x in discard])
+        deck = [0] * self.STARTING_DECK_SIZE
+        deck[:len(self.gameState.deck)] = self.gameState.deck
+
+        obs = np.array(playerStates + deck + discard)
+
+        # obs = "|".join(playerStates) + "|" + str(len(self.gameState.deck)) + "|" + ",".join([str(x) for x in discard])
         # state = "|".join([",".join([str(x) for x in playerState.hand]) for playerState in self.playerHands]) + "|" + str(len(self.deck)) + "|" + ",".join([str(x) for x in discard])
         return obs
 
@@ -197,6 +213,10 @@ class EKGameV0:
     def getRandomAction(self):
         allowedActions = self.allowedActions
         return allowedActions[random.randint(0, len(allowedActions)-1)]
+    
+    def render(self, mode='human'):
+        # Render the environment to the screen
+        print(f"State: {self.state}")
 
     
 
@@ -440,3 +460,6 @@ class ExplodingKittensGameState():
             self.playerHands[opponentSelected].hand[chosenCardIndex] -= 1
             return False
 
+if __name__ == "__main__":
+    print(Cards.numCardTypes())
+    print(len(Cards))

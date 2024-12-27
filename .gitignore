@@ -111,6 +111,9 @@ games/archive/
 run/
 .DS_Store
 *.pyc
+.venv/
+*.zip
+*.log
 
 #VSCode
 .vscode/
